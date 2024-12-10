@@ -36,17 +36,17 @@ jobs:
         run: |
           pyinstaller --onefile --windowed --name "KMG2D" --icon=icon.ico src/app.py
 
-      # 5. Upload le setup en tant qu'artifact
-      - name: Upload setup.exe
+      # 5. Upload le KMG2D.exe en tant qu'artifact
+      - name: Upload KMG2D.exe
         uses: actions/upload-artifact@v4
         with:
           name: KMG2D
-          path: src/dist/KMG2D.exe
+          path: dist/KMG2D.exe
 
       # 6. Créer une release si nécessaire
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: src/dist/KMG2D.exe
+          files: dist/KMG2D.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
