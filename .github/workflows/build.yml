@@ -2,8 +2,8 @@ name: Build KMG2D Setup
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
 
 jobs:
   build:
