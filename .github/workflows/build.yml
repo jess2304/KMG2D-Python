@@ -34,7 +34,7 @@ jobs:
       # 4. Génèrer le fichier executable avec PyInstaller
       - name: Build executable
         run: |
-          pyinstaller --onefile --windowed --name "KMG2D" --icon=../icon.ico src/app.py
+          pyinstaller --onefile --windowed --name "KMG2D" --icon=icon.ico src/app.py
 
       # 5. Upload le setup en tant qu'artifact
       - name: Upload setup.exe
