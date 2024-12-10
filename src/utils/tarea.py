@@ -19,11 +19,18 @@ def tarea(p, t, nargout=1):
     if nargout == 1:
         return np.abs(ar)
 
+    eps = 1e-12  # Seuil minimal
     # Qualité des triangles
     a1 = np.sqrt(x21**2 + y21**2)
     a2 = np.sqrt(x31**2 + y31**2)
     a3 = np.sqrt(x32**2 + y32**2)
+
+    a1 = np.maximum(a1, eps)
+    a2 = np.maximum(a2, eps)
+    a3 = np.maximum(a3, eps)
+
     qt = (a2 + a3 - a1) * (a3 + a1 - a2) * (a1 + a2 - a3) / (a1 * a2 * a3)
+    qt = np.where(np.isnan(qt) | np.isinf(qt), 0, qt)
 
     if nargout == 2:
         return np.abs(ar), qt
