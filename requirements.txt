@@ -1,3 +1,6 @@
 numpy==2.1.3
 scipy==1.14.1
 matplotlib==3.9.3
+pyinstaller==6.11.1
+pywin32==308
+winshell==0.6

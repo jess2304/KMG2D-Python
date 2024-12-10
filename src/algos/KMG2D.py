@@ -9,10 +9,23 @@ from scipy.spatial import Delaunay
 from algos.kmg2dedg import kmg2dedg
 from algos.kmg2dref import kmg2dref
 from algos.pnodes import pnodes
+from utils.draw import draw
 from utils.tarea import tarea
 
 
-def kmg2d(fd, fh, h0, bbox, dg, nr, pfix=None, *arguments):
+def kmg2d(
+    fd,
+    fh,
+    h0,
+    bbox,
+    nr,
+    pfix=None,
+    canvas=None,
+    root=None,
+    ax=None,
+    update_progress=None,
+    *arguments
+):
     """
     Algorithme principal de génération de maillages
     """
@@ -91,17 +104,17 @@ def kmg2d(fd, fh, h0, bbox, dg, nr, pfix=None, *arguments):
         p = np.vstack((pfix, p))
 
     print("\n Initial number of nodes : %5d \n" % p.shape[0])
-    plt.plot(p[:, 0], p[:, 1], ".")
-    plt.pause(3)
 
     itri = 0
     iter = 0
     ifix = []
     tolp = 1
     tolr = 10**2
-
     # Boucle itérative pour améliorer le rendu
     while (iter < iterMax) and (tolp > epsp):
+        if hasattr(root, "stop_flag") and root.stop_flag:
+            print("Arrêt forcé détecté. Fin de l'exécution.")
+            return
         iter += 1
         np_count = p.shape[0]
 
@@ -127,11 +140,14 @@ def kmg2d(fd, fh, h0, bbox, dg, nr, pfix=None, *arguments):
             bn = np.unique(be)
             ii = np.setdiff1d(np.arange(np_count), bn)
 
-            plt.clf()
-            plt.triplot(p[:, 0], p[:, 1], t)
-            plt.axis("equal")
-            plt.axis("off")
-            plt.pause(0.0001)
+            # Mise à jour de la figure dans Tkinter
+            draw(p, t, ax, canvas, root)
+
+            # Mise à jour de la barre de progression
+            progress_value = 100 * (1 - (tolp - epsp) / (1 - epsp))
+            progress_value = max(0, min(100, progress_value))
+            if update_progress:
+                update_progress(progress_value, iter, iterMax)
 
         # longueurs et forces
         evec = p[e[:, 0], :] - p[e[:, 1], :]
@@ -220,26 +236,22 @@ def kmg2d(fd, fh, h0, bbox, dg, nr, pfix=None, *arguments):
             % (iter, itri, tolp, len(ifix) - npf)
         )
         itri = 0
-
     # Raffinement final
-    if dg > 1 or nr > 1:
-        if dg == 1:
-            for i in range(nr):
-                p, t, be, bn = kmg2dref(p, t, dg, fd, deps, 1000 * deps, *arguments)
-        else:
-            for i in range(nr - 1):
-                p, t, be, bn = kmg2dref(p, t, 1, fd, deps, 1000 * deps, *arguments)
-            p, t, be, bn = kmg2dref(p, t, 2, fd, deps, 1000 * deps, *arguments)
+    if nr >= 1:
+        for i in range(nr):
+            p, t, be, bn = kmg2dref(p, t, fd, deps, 1000 * deps, *arguments)
 
-    plt.clf()
-    plt.triplot(p[:, 0], p[:, 1], t)
-    plt.axis("equal")
-    plt.axis("off")
-    plt.draw()
+    # Mise à jour de la figure dans Tkinter
+    draw(p, t, ax, canvas, root)
+    # Mise à jour de la barre de progression
+    progress_value = 100 * (1 - (tolp - epsp) / (1 - epsp))
+    progress_value = max(0, min(100, progress_value))
+    if update_progress:
+        update_progress(progress_value, iter, iterMax)
 
     # On suppose min(qt) calculé plus haut
     # Il faudrait recalculer qt pour l'afficher ici
-    ar, qt, te = tarea(p, t, 3)
+    ar, qt, _ = tarea(p, t, 3)
     print("\nNumber of nodes ---------: %5d" % p.shape[0])
     print("Number of triangles--------: %5d" % t.shape[0])
     print("Triangle quality measure---> %5.3f" % np.min(qt))
@@ -249,7 +261,6 @@ def kmg2d(fd, fh, h0, bbox, dg, nr, pfix=None, *arguments):
     print("Time elapsed:", end - start, "s")
 
     plt.ioff()
-    plt.show()
 
     e, ib, _ = kmg2dedg(t)
     be = e[ib, :]
